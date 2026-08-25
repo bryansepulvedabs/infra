@@ -1,0 +1,57 @@
+services:
+
+  car-service-db:
+    image: postgres:16
+    container_name: car-service-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${CAR_DB_NAME}
+    ports:
+      - "${CAR_DB_PORT}:5432"
+    volumes:
+      - car_service_db_data:/var/lib/postgresql/data
+
+  user-service-db:
+    image: postgres:16
+    container_name: user-service-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${USER_DB_NAME}
+    ports:
+      - "${USER_DB_PORT}:5432"
+    volumes:
+      - user_service_db_data:/var/lib/postgresql/data
+
+  car-service:
+    build: ../car-service
+    container_name: car-service
+    restart: unless-stopped
+    depends_on:
+      - car-service-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://car-service-db:5432/${CAR_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${CAR_SERVICE_PORT}:${CAR_SERVICE_PORT}"
+
+  user-service:
+    build: ../user-service
+    container_name: user-service
+    restart: unless-stopped
+    depends_on:
+      - user-service-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-service-db:5432/${USER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
+
+volumes:
+  car_service_db_data:
+  user_service_db_data:
